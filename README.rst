@@ -4,13 +4,15 @@ django-cinch
 **Code Is Not Configuration. However...**
 
 Django settings modules can rapidly get out of hand when many developers
-are working on a project. Modularising beyond the level of singular Python
-modules by way of `from parent_module import *` isn't ideal because the
-imported modules have no knowledge of settings defined before their
+are working on a project, especially if they're each using their own
+local development settings files, and when feature branches abound, it's
+easy to engineer collisions. Modularising beyond the level of singular
+Python modules by way of ``from parent_module import *`` isn't ideal because
+the imported modules have no knowledge of settings defined before their
 import. The philosophy behind cinch is simple:
 
-- A settings module can import other settings modules using `execfile()`
-- Your settings are the uppercase names in your `globals()` dict
+- A settings module can import other settings modules using ``execfile()``
+- Your settings are the uppercase names in your ``globals()`` dict
 - It's just a dict
 - dict.setdefault is a really useful here
 

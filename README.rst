@@ -7,7 +7,14 @@ django-cinch
 Django settings modules can rapidly get out of hand when many developers
 are working on a project, especially if they're each using their own
 local development settings. And when feature branches abound, it's
-easy to engineer collisions.
+easy to engineer collisions. Cinch reduces boilerplate, enables modularity
+and takes most of the work out of engineering Django settings modules.
+
+- `Settings are a dict and that is all`_
+- `A project's worth of sensible defaults`_
+- `Utility classes for Django's settings`_
+    - `Python logging made easy`_
+
 
 Settings are a dict and that is all
 ===================================

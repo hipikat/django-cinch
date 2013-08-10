@@ -11,8 +11,8 @@ easy to engineer collisions. Cinch reduces boilerplate, enables modularity
 and takes most of the work out of engineering Django settings modules.
 
 - `Settings are a dict and that is all`_
-- `A project's worth of sensible defaults`_
-- `Utility classes for Django's settings`_
+- `A projects worth of sensible defaults`_
+- `Utility classes for Djangos settings`_
     - `Python logging made easy`_
 
 

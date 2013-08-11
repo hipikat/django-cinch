@@ -2,7 +2,7 @@
 Base debug settings for a project to include via execfile().
 """
 
-from revkom.settings import base_settings_mixin
+from cinch import cinch_settings
 
 
 G = globals()
@@ -11,11 +11,11 @@ S = G.setdefault
 
 # Debugging and development modes
 S('DEBUG', True)
-S('TEMPLATE_STRING_IF_INVALID', 'INVALID_CONTEXT[%s]')
 S('TEMPLATE_DEBUG', G['DEBUG'])
+S('TEMPLATE_STRING_IF_INVALID', 'INVALID_CONTEXT[%s]')
 
-# Include our sibling base settings.
-execfile(base_settings_mixin('base'))
+# Include our sibling base settings
+G.update(cinch_settings('base', G))
 
 # Directory structure
 S('MEDIA_ROOT', G['TMP_DIR'].child('media'))

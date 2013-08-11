@@ -1,23 +1,7 @@
-"""
-Utilities for configuring Django settings.
-
-https://docs.djangoproject.com/en/dev/topics/settings/
-"""
-# TODO: Pull formatters out of base and set them here if they're not specified.
 
 import os
 from collections import Mapping
-from revkom.utils import EasyList, deep_update
-
-
-class SettingsList(EasyList):
-    """
-    An EasyList which by default is kept flat, and whose values are kept unique.
-    """
-    def __init__(self, *iterables, **kwargs):
-        super(SettingsList, self).__init__(*iterables)
-        self.unique = kwargs.get('unique', True)
-        self.flat = kwargs.get('flat', True)
+from revkom.coll import EasyList, deep_update
 
 
 ###

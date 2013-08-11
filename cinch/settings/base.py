@@ -12,8 +12,8 @@ files, while setting defaults based on the value of attributes.
 import sys
 from unipath import Path
 from django.core.exceptions import ImproperlyConfigured
-from revkom.settings import SETTINGS_PATH
-from revkom.settings.utils import LoggingSetting, SettingList
+from cinch.common import SettingList
+from cinch.logging import LoggingSetting
 
 
 # Shortcuts for checking and setting default settings.
@@ -22,11 +22,11 @@ S = G.setdefault
 
 
 # Test mode
-G['TESTING'] = True if 'test' in sys.argv else False
+S('TESTING', True if 'test' in sys.argv else False)
 
 
 # Check for settings which must be defined before this file is execfile()'d
-S('REVKOM_REQUIRED_SETTINGS', set(['PROJECT_NAME', 'ADMINS']))
+S('REVKOM_REQUIRED_SETTINGS', set(['PROJECT_DIR', 'PROJECT_NAME', 'ADMINS']))
 if not G['REVKOM_REQUIRED_SETTINGS'].issubset(G):
     raise ImproperlyConfigured(
         "Missing expected setting(s): %s" %
@@ -44,8 +44,6 @@ S('WSGI_APPLICATION', G['PROJECT_NAME'] + '.wsgi.application')
 ###
 # Directory structure
 ###
-# Project directory is the repository root.
-S('PROJECT_DIR', SETTINGS_PATH.ancestor(3))
 # Only fixtures, static and template directories are used internally by Django.
 S('LIB_DIR', G['PROJECT_DIR'].child('lib'))              # lib/
 S('VAR_DIR', G['PROJECT_DIR'].child('var'))              # var/
@@ -184,7 +182,6 @@ S('MIDDLEWARE_CLASSES', SettingList(
 # Django - Installed apps
 ###
 S('INSTALLED_APPS', SettingList(
-    'revkom',
     # django-extensions: shell_plus, runserver_plus, etc.
     # http://packages.python.org/django-extensions/
     'django_extensions',

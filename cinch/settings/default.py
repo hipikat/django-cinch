@@ -7,10 +7,15 @@ DJANGO_SETTINGS_MODULE environment variable should be set. The author
 suggests a postactivate hook in the project's virtual environment.
 """
 
-from revkom.settings import base_settings_mixin
+from cinch import cinch_settings
 
 
-ADMINS = ()
-PROJECT_NAME = 'revkom'
+G = globals()
+S = G.setdefault
 
-execfile(base_settings_mixin('debug'))
+
+S('ADMINS', ())
+S('PROJECT_NAME', 'cinch')
+
+# Include our sibling debug settings
+G.update(cinch_settings('debug', G))

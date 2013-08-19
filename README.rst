@@ -1,6 +1,6 @@
-************
+############
 django-cinch
-************
+############
 
 **Code Is Not Configuration. However...**
 

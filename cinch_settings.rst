@@ -12,6 +12,8 @@ Loading from cinch_settings
 
     # Project directory is generally the 'repository root'
     PROJECT_DIR = Path(__file__).ancestor(4)
+
+    # TODO: get this out, it should be loadable from cinch.json
     ADMINS = [('Adam Wright', 'adam@hipikat.org')]
 
     # Update settings with Cinch defaults
@@ -33,6 +35,91 @@ variables via ``G`` in order to keep your linter happy:
 ::
 
     G['STATICFILES_DIRS'].append('/users/hipikat/my_static_files')
+    TODO: more examples
+
+Directory structure
+-------------------
+The default Cinch project structure is inspired by conventions from the
+Filesystem Hierarchy Standard.
+
+Cinch conventions (that you don't need to follow)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``LIB_DIR = PROJECT_DIR + '/lib'``
+    Third-party dependancies (besides the ones you can ``pip install``),
+    preferably installed as git submodules.
+
+``ETC_DIR = PROJECT_DIR + '/etc'``
+    Configuration files. If you include a cinch.json file here, Cinch will
+    attempt to load settings it declares directly, from environment variables,
+    and from flat files as described in TODO.
+
+``SRC_DIR = PROJECT_DIR + '/src'``
+    Source code for the project. This directory should be on the Python
+    path.
+
+``VAR_DIR = PROJECT_DIR + '/var'``
+    Variable data files. If you follow `12 Factor`_, your production code
+    shouldn't rely on the longevity of anything under this directory
+    (outside of what's in version control).
+
+    By default, Cinch uses ``VAR_DIR`` as a container for collected static
+    media, user-uploaded media, fixtures, logs, temporary files, 
+    development databases and database dumps.
+
+.. _12 Factor: http://www.12factor.net
+
+``DB_DIR = VAR_DIR + '/db'``
+    Database files, including dumps. Until you define real database
+    settings, Django will use an Sqlite database named ``default.db``
+    under this directory.
+
+``LOG_DIR = VAR_DIR + '/log'``
+    Log files.
+
+``TMP_DIR = VAR_DIR + '/tmp'``
+    Temporary file directory, such as for build directories for docs
+    or CSS/JS compilers, etc.
+
+Directories used by Django
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``STATIC_ROOT = VAR_DIR + '/static'``
+    Destination directory for ``manage.py collectstatic``. Ideally, this
+    should only be used during development and possibly deployment -
+    production settings modules will reference your CDN of choice.
+
+``MEDIA_ROOT = VAR_DIR + '/media'``
+    User-uploaded files are saved here. Ideally, this
+    should only be used during development, and production settings
+    modules will reference your CDN of choice.
+
+``STATICFILES_DIRS = [SRC_DIR + '/static']``
+    Static files specific to your project, as harvested by
+    ``manage.py collectstatic``.
+
+``TEMPLATE_DIRS = [SRC_DIR + '/templates']``
+    Django template files. If ``'django.template.loaders.filesystem.Loader'``
+    comes before ``'django.contrib.staticfiles.finders.AppDirectoriesFinder'``
+    in your ``STATICFILES_FINDERS`` setting, this directory will be checked
+    for templates before third-party apps' template/ directories.
+
+``FIXTURE_DIRS = [VAR_DIR + '/fixtures']``
+    Project fixtures. The use of fixtures is discouraged. :)
+
+The apps directory
+^^^^^^^^^^^^^^^^^^
+
+``sys.path.insert(0, SRC_DIR + '/apps'))``
+    If you've got third-party apps you can't or don't want to ``pip install``
+    (perhaps because you're patching them and sending pull requests back
+    to their authors), you can symlink their Python package directories
+    into src/apps/ to make them findable by Python. That is, from your
+    project repository root::
+
+        $ git submodule add git@github.com:foo/django-bar.git lib/django-bar
+        Cloning into 'lib/django-bar'...
+        ...
+        $ ln -s ../../lib/django-bar/bar src/apps/bar
 
 Django metadata
 ---------------
@@ -47,82 +134,16 @@ Django metadata
     Django defaults to "America/Chicago" for historical reasons.
 
 ``LANGUAGE_CODE = "en"``
-    Django defaults to "en-us" for presumably americanocentric reasons.
+    Django defaults to "en-us" for presumably Americanocentric reasons.
 
 ``SITE_ID = 1``
     The default is ``None``, but this must be set if the sites framework
-    is installed (i.e. if ``'django.contrib.sites'`` is in ``INSTALLED_APPS``).
+    is installed (i.e. if ``'django.contrib.sites'`` is in ``INSTALLED_APPS``),
+    so it defaults to 1 for the *vast* majority of projects.
 
 ``WSGI_APPLICATION = PROJECT_NAME + '.wsgi.application'``
     Your main project package provides a logical namespace for the wsgi
     module.
-
-Directory structure
--------------------
-The default Cinch project structure is inspired by conventions from the
-Filesystem Hierarchy Standard wherever possible.
-
-``LIB_DIR = PROJECT_DIR + '/lib'``
-    Store third-party dependancies (besides the ones you can ``pip install``)
-    in here, preferably as git submodules.
-
-``ETC_DIR = PROJECT_DIR + '/etc'``
-    Configuration files. Any files of the form UPPERCASE_NAME.setting
-    found under this directory will be loaded as settings.
-
-``VAR_DIR = PROJECT_DIR + '/var'``
-    Variable data files. Everything under this directory should be
-    considered transient, disposable and/or only used during development
-    or testing.
-
-``DB_DIR = VAR_DIR + '/db'``
-    Database files including dumps and SQLite files.
-
-``FIXTURE_DIRS = [VAR_DIR + '/fixtures']``
-    Project and application fixtures.
-
-``LOG_DIR = VAR_DIR + '/log'``
-    Log files.
-
-``STATIC_ROOT = VAR_DIR + '/static'``
-    Destination directory for ``manage.py collectstatic``. Ideally, this
-    should only be used during development, and production settings
-    modules will reference an AWS S3 bucket or some such.
-
-``MEDIA_ROOT = VAR_DIR + '/media'``
-    User-uploaded files are saved here. Ideally, this
-    should only be used during development, and production settings
-    modules will reference an AWS S3 bucket or some such.
-
-``TMP_DIR = VAR_DIR + '/tmp'``
-    Temporary file directory, such as for build directories for docs
-    or CSS/JS compilers, etc.
-
-``SRC_DIR = PROJECT_DIR + '/src'``
-    Source code for the project. This directory should be on the Python
-    path.
-
-``STATICFILES_DIRS = [SRC_DIR + '/static']``
-    Static files specific to your project, as harvested by
-    ``manage.py collectstatic``.
-
-``TEMPLATE_DIRS = [SRC_DIR + '/templates']``
-    Django template files. If ``'django.template.loaders.filesystem.Loader'``
-    comes before ``'django.contrib.staticfiles.finders.AppDirectoriesFinder'``
-    in your ``STATICFILES_FINDERS`` setting, this directory will be checked
-    for templates before third-party apps' template/ directories.
-
-``sys.path.insert(0, SRC_DIR + '/apps'))``
-    If you've got third-party apps you can't or don't want to ``pip install``
-    (perhaps because you're patching them and sending pull requests back
-    to their authors), you can symlink them in src/apps/ to make them
-    findable by Python. That is, from your project repository root
-    directory::
-
-        $ git submodule add git@github.com:hipikat/django-hostess.git lib/django-hostess
-        Cloning into 'lib/foobar'...
-        ...
-        $ ln -s ../../lib/django-hostess/hostess src/apps/hostess
 
 Security
 --------
@@ -131,4 +152,27 @@ Security
 ``ALLOWED_HOSTS = CINCH_LOCAL_HOSTS + G.get('ALLOWED_HOSTS', [])``
     If you set your high-level domain name in your settings before using ``cinch_settings()``,
     ``CINCH_LOCAL_HOSTS`` will be added to the set.
+
+``ALLOWED_HOSTS = list(set(G.get('ALLOWED_HOSTS', [])) | set(['localhost', '127.0.0.1']))``
+    Cinch will add 'localhost' and '127.0.0.1' to your ``ALLOWED_HOSTS``.
+    If your project is serving example.com and its subdomains,
+    you just need to define ``ALLOWED_HOSTS = ['.exmaple.com']`` before
+    including Cinch settings.
+
+``INTERNAL_IPS = tuple(set(G.get('INTERNAL_IPS', [])) | set(['127.0.0.1']))``
+    Cinch will add '127.0.0.1' to your ``INTERNAL_IPS``. If your team use
+    a VPN, just add its IPs to ``INTERNAL_IPS`` before including Cinch
+    settings.
+
+Debugging and development modes
+-------------------------------
+``S('DEBUG', False)``
+    If you call ``cinch_settings()`` with 'debug' or 'prod' as the first
+    argument, ``DEBUG`` will default to ``True`` or ``False``, respectively.
+    If you extend from 'base' TODO-lipsum.
+
+    If your settings include the 'base' Cinch settings, debug-mode will
+    default to ``False`` unless you define it. If you include 'prod' or 'debug'
+    (which both extend 'base'), they will default ``DEBUG`` to False or True,
+    respectively. That is to say, you should usually just 
 

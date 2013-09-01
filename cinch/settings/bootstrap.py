@@ -6,12 +6,12 @@ file, via a Django management command, before one has been created.
 from cinch import cinch_settings
 
 
-G = globals()
-S = G.setdefault
+g = globals()
+S = g.setdefault
 
 
 SECRET_KEY = '12345'
 
 
 # Include our sibling default settings
-G.update(cinch_settings('default', G))
+g.update(cinch_settings(g, 'default'))

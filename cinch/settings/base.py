@@ -9,75 +9,102 @@ These base settings will avoid overriding settings from including
 files, while setting defaults based on the value of attributes.
 """
 
+import os
+import json
 import sys
 from unipath import Path
 from django.core.exceptions import ImproperlyConfigured
-from cinch.common import SettingList
+#from cinch.common import SettingList
 from cinch.logging import LoggingSetting
 
 
 # Shortcuts for checking and setting default settings.
-G = globals()
-S = G.setdefault
+g = globals()
+S = g.setdefault
 
 
 # Test mode
 S('TESTING', True if 'test' in sys.argv else False)
 
-
 # Check for settings which must be defined before this file is execfile()'d
-S('REVKOM_REQUIRED_SETTINGS', set(['PROJECT_DIR', 'PROJECT_NAME', 'ADMINS']))
-if not G['REVKOM_REQUIRED_SETTINGS'].issubset(G):
+S('CINCH_REQUIRED_SETTINGS', set(['PROJECT_DIR', 'PROJECT_NAME', 'ADMINS']))
+if not g['CINCH_REQUIRED_SETTINGS'].issubset(g):
     raise ImproperlyConfigured(
         "Missing expected setting(s): %s" %
-        list(G['REVKOM_REQUIRED_SETTINGS'].difference(G)))
+        list(g['CINCH_REQUIRED_SETTINGS'].difference(g)))
 
 ###
 # Django - Metadata
 ###
-S('MANAGERS', G['ADMINS'])
+S('MANAGERS', g['ADMINS'])
 S('TIME_ZONE', 'UTC')           # Default is "America/Chicago"
 S('LANGUAGE_CODE', 'en')        # Default is "en-us"
 S('SITE_ID', 1)                 # Default is not defined
-S('WSGI_APPLICATION', G['PROJECT_NAME'] + '.wsgi.application')
+S('WSGI_APPLICATION', g['PROJECT_NAME'] + '.wsgi.application')
 
 ###
 # Directory structure
 ###
 # Only fixtures, static and template directories are used internally by Django.
-S('LIB_DIR', G['PROJECT_DIR'].child('lib'))              # lib/
-S('VAR_DIR', G['PROJECT_DIR'].child('var'))              # var/
-S('ETC_DIR', G['PROJECT_DIR'].child('etc'))              # etc/
-S('DB_DIR', G['VAR_DIR'].child('db'))                    # var/db/
-S('FIXTURE_DIRS', [G['VAR_DIR'].child('fixtures'),])     # var/fixtures/
-S('LOG_DIR', G['VAR_DIR'].child('log'))                  # var/log/
-S('STATIC_ROOT', G['VAR_DIR'].child('static'))           # var/static/
-S('MEDIA_ROOT', G['VAR_DIR'].child('media'))             # var/media/
-S('TMP_DIR', G['VAR_DIR'].child('tmp'))                  # var/tmp/
-S('SRC_DIR', G['PROJECT_DIR'].child('src'))              # src/
-S('STATICFILES_DIRS', [G['SRC_DIR'].child('static'),])   # src/static/
-S('TEMPLATE_DIRS', [G['SRC_DIR'].child('templates'),])   # src/templates/
-sys.path.insert(0, G['SRC_DIR'].child('apps'))           # src/apps/
+S('LIB_DIR', g['PROJECT_DIR'].child('lib'))              # lib/
+S('VAR_DIR', g['PROJECT_DIR'].child('var'))              # var/
+S('ETC_DIR', g['PROJECT_DIR'].child('etc'))              # etc/
+S('DB_DIR', g['VAR_DIR'].child('db'))                    # var/db/
+S('FIXTURE_DIRS', [g['VAR_DIR'].child('fixtures')])     # var/fixtures/
+S('LOG_DIR', g['VAR_DIR'].child('log'))                  # var/log/
+S('STATIC_ROOT', g['VAR_DIR'].child('static'))           # var/static/
+S('MEDIA_ROOT', g['VAR_DIR'].child('media'))             # var/media/
+S('TMP_DIR', g['VAR_DIR'].child('tmp'))                  # var/tmp/
+S('SRC_DIR', g['PROJECT_DIR'].child('src'))              # src/
+S('STATICFILES_DIRS', [g['SRC_DIR'].child('static')])   # src/static/
+S('TEMPLATE_DIRS', [g['SRC_DIR'].child('templates')])   # src/templates/
+sys.path.insert(0, g['SRC_DIR'].child('apps'))           # src/apps/
 
 ###
 # Security
 ###
-# Host/domain names that are valid for this site; required if DEBUG is False.
+# A list of host/domains that are valid for this site; required if DEBUG is False.
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-S('REVKOM_LOCAL_HOSTS', ['localhost', '127.0.0.1'])
-ALLOWED_HOSTS = SettingList(G.get('ALLOWED_HOSTS'), REVKOM_LOCAL_HOSTS)
-INTERNAL_IPS = SettingList(G.get('INTERNAL_IPS'), REVKOM_LOCAL_HOSTS)
+ALLOWED_HOSTS = list(set(g.get('ALLOWED_HOSTS', [])) | set(['localhost', '127.0.0.1']))
+# A tuple of IP addresses, as strings, that see debug comments when DEBUG is true.
+# https://docs.djangoproject.com/en/dev/ref/settings/#internal-ips
+INTERNAL_IPS = tuple(set(g.get('INTERNAL_IPS', [])) | set(['127.0.0.1']))
 
+# Load configuration variables from a Cinch JSON file if they exist
+# TODO: Use the object_pairs_hook kwarg of json.load to load settings
+# in the order in which they're defined. Also, break this apart.
+if g['ETC_DIR'].child('cinch.json').exists():
+    with open(g['ETC_DIR'].child('cinch.json')) as conf_f:
+        conf_s = conf_f.read()
+    conf = json.loads(conf_s)
+    # Read settings directly from anything in a 'settings' object
+    if 'settings' in conf:
+        for key, val in conf['settings'].items():
+            g[key.upper()] = val
+    # Parse files listed in a 'read_files' array as settings
+    if 'read_files' in conf:
+        for file_name in conf['read_files']:
+            file_path = Path(g['ETC_DIR'], file_name)
+            with open(file_path) as setting_f:
+                g[file_name.upper()] = setting_f.read()
+    # Read settings from environment variables listed in an 'env_vars' array
+    if 'env_vars' in conf:
+        for env_var in conf['env_vars']:
+            g[env_var.upper()] = os.getenv(env_var.upper())
+
+#import pdb; pdb.set_trace() 
+    
 
 # By default we look for a secret key in var/SECRET_KEY. New secret keys
 # can be generated by running `scripts/make_secret_key.py'
 # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY
-S('SECRET_KEY_FILE', G['ETC_DIR'].child('SECRET_KEY'))
-if 'SECRET_KEY' not in G:
-    if 'SECRET_KEY_FILE' in G and Path(G['SECRET_KEY_FILE']).exists():
-        SECRET_KEY = G['SECRET_KEY_FILE'].read_file()
-    elif G['ETC_DIR'].child('SECRET_KEY').exists():
-        SECRET_KEY = G['ETC_DIR'].child('SECRET_KEY').read_file()
+# TODO: Get rid of. Use cinch.json
+S('SECRET_KEY_FILE', g['ETC_DIR'].child('SECRET_KEY'))
+if 'SECRET_KEY' not in g:
+    if 'SECRET_KEY_FILE' in g and Path(g['SECRET_KEY_FILE']).exists():
+        SECRET_KEY = g['SECRET_KEY_FILE'].read_file()
+    elif g['ETC_DIR'].child('SECRET_KEY').exists():
+        SECRET_KEY = g['ETC_DIR'].child('SECRET_KEY').read_file()
 
 ###
 # Debugging and development modes
@@ -93,11 +120,11 @@ S('LOGGING', LoggingSetting({
         'verbose': {
             'format': "\n%(levelname)s [%(asctime)s][%(pathname)s:%(lineno)s]" +
                       "[p/t:%(process)d/%(thread)d]\n%(message)s"
-        },  
+        },
         'simple': {
             'format': '%(levelname)s [%(module)s:%(lineno)s] %(message)s'
-        },  
-    },   
+        },
+    },
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
@@ -117,26 +144,32 @@ S('LOGGING', LoggingSetting({
             'propagate': True,
         },
     },
-}, logfile_dir=G['LOG_DIR']))
+}, logfile_dir=g['LOG_DIR']))
 
 ###
 # Databases
-###
-if 'DATABASES' not in G:
-    DATABASES = DatabasesSetting()['default'] = \
-        db_setting(engine='sqlite3', name=G['DB_DIR'].child('default.db'))
+### TODO
+#if 'DATABASES' not in G:
+#    DATABASES = DatabasesSetting()['default'] = \
+#        db_setting(engine='sqlite3', name=g['DB_DIR'].child('default.db'))
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': g['DB_DIR'].child('default.db'),
+    }
+}
 
 ###
 # Caching
-###
-S('CACHE_MIDDLEWARE_ANONYMOUS_ONLY', True)
-if 'CACHES' not in G:
-    CACHES = CachesSetting()['default'] = {'backend': 'LocMemCache'}
+### TODO
+#S('CACHE_MIDDLEWARE_ANONYMOUS_ONLY', True)
+#if 'CACHES' not in G:
+#    CACHES = CachesSetting()['default'] = {'backend': 'LocMemCache'}
 
 ###
 # URLs
 ###
-S('ROOT_URLCONF', G['PROJECT_NAME'] + '.urls')
+S('ROOT_URLCONF', g['PROJECT_NAME'] + '.urls')
 S('MEDIA_URL', '/media/')
 S('STATIC_URL', '/static/')
 
@@ -151,16 +184,16 @@ S('USE_TZ', True)       # Timezone support for dates
 # Django - File discovery
 ###
 # List of finder classes that know how to find static files.
-S('STATICFILES_FINDERS', SettingList(
+S('STATICFILES_FINDERS', [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-))
+])
 
 # List of callables that know how to import templates.
-S('TEMPLATE_LOADERS', SettingList(
+S('TEMPLATE_LOADERS', [
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-))
+])
 # Used by Revkom's CustomFileFinder, for cherry-picking static files
 # A dictionary of the form { static_path: filesystem_path, ... }
 S('REVKOM_STATICFILES', {})
@@ -169,19 +202,19 @@ S('REVKOM_STATICFILES', {})
 # Django - request pipline
 ###
 # https://docs.djangoproject.com/en/dev/topics/http/middleware/
-S('MIDDLEWARE_CLASSES', SettingList(
+S('MIDDLEWARE_CLASSES', [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-))
+])
 
 ###
 # Django - Installed apps
 ###
-S('INSTALLED_APPS', SettingList(
+S('INSTALLED_APPS', [
     # django-extensions: shell_plus, runserver_plus, etc.
     # http://packages.python.org/django-extensions/
     'django_extensions',
@@ -199,4 +232,4 @@ S('INSTALLED_APPS', SettingList(
     'django.contrib.sessions',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-))
+])

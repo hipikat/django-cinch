@@ -10,12 +10,12 @@ suggests a postactivate hook in the project's virtual environment.
 from cinch import cinch_settings
 
 
-G = globals()
-S = G.setdefault
+g = globals()
+S = g.setdefault
 
 
 S('ADMINS', ())
 S('PROJECT_NAME', 'cinch')
 
 # Include our sibling debug settings
-G.update(cinch_settings('debug', G))
+g.update(cinch_settings(g, 'debug'))

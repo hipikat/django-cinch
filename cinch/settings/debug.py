@@ -5,26 +5,26 @@ Base debug settings for a project to include via execfile().
 from cinch import cinch_settings
 
 
-G = globals()
-S = G.setdefault
+g = globals()
+S = g.setdefault
 
 
 # Debugging and development modes
 S('DEBUG', True)
-S('TEMPLATE_DEBUG', G['DEBUG'])
+S('TEMPLATE_DEBUG', g['DEBUG'])
 S('TEMPLATE_STRING_IF_INVALID', 'INVALID_CONTEXT[%s]')
 
 # Include our sibling base settings
-G.update(cinch_settings('base', G))
+g.update(cinch_settings(g, 'base'))
 
 # Directory structure
-S('MEDIA_ROOT', G['TMP_DIR'].child('media'))
+S('MEDIA_ROOT', g['TMP_DIR'].child('media'))
 
 # Django - request pipeline
-G['MIDDLEWARE_CLASSES'].append('debug_toolbar.middleware.DebugToolbarMiddleware')
+g['MIDDLEWARE_CLASSES'].append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 # Django - installed apps
-G['INSTALLED_APPS'].append(
+g['INSTALLED_APPS'].append(
     # django-debug-toolbar: A configurable set of panels that display
     # various debug information about the current request/response.
     # https://github.com/django-debug-toolbar/django-debug-toolbar

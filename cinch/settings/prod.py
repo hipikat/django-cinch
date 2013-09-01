@@ -5,12 +5,12 @@ Base production settings for a project to include via execfile().
 from cinch import cinch_settings
 
 
-G = globals()
-S = G.setdefault
+g = globals()
+S = g.setdefault
 
 
 # Debugging and development modes
 S('DEBUG', False)
 
 # Include our sibling debug settings
-G.update(cinch_settings('base', G))
+g.update(cinch_settings(g, 'base'))

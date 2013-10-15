@@ -1,5 +1,6 @@
 
 from os import environ, path
+import sys
 from runpy import run_module
 from django.core.exceptions import ImproperlyConfigured
 from configurations import Configuration
@@ -18,12 +19,28 @@ def cinch_settings(globals_dict, name=None):
 class BaseConfiguration(Configuration):
 
     @classmethod
+    def _get_cinch_meta(cls, value, *default):
+        """Return a named value from a configuration's CinchMeta class."""
+        try:
+            return getattr(cls.CinchMeta, value)
+        except AttributeError:
+            try:
+                return default[0]
+            except IndexError:
+                raise AttributeError(
+                    "Missing required attribute {}.CinchMeta.{}".format(cls.__name__, value))
+        
+    @classmethod
     def setup(cls):
         """Process any methods on this class with the name ``_setup__foo``."""
-        super(Base, cls).setup()
+        super(BaseConfiguration, cls).setup()
         for name in dir(cls):
             if name.startswith('_setup__'):
                 getattr(cls, name)()
+        # TODOLipsum: set defaults
+        if not hasattr(cls, 'ROOT_URLCONF'):
+            cls.ROOT_URLCONF = cls.PROJECT_NAME + '.urls'
+        #import pdb; pdb.set_trace()
 
     SITE_ID = 1
 
@@ -50,12 +67,15 @@ class BaseConfiguration(Configuration):
         based on DATABASE_TYPE, falling back to sqlite if it hasn't been set.
         Valid values for ``DATABASE_TYPE`` are 'postgresql' and 'sqlite'.
         """
-        if hasattr(cls, 'DATABASES'):
+        if hasattr(cls, 'DATABASES') and len(cls.DATABASES):
             return
-        db_user = cls.DB_USER if hasattr(cls, 'DB_USER') else cls.PROJECT_NAME
-        db_type = getattr(cls, 'DATABASE_TYPE', 'sqlite')
-        db_suffix = getattr(cls, 'DATABASE_SUFFIX', '_default')
-        db_name = getattr(cls, 'DATABASE_NAME', cls.PROJECT_NAME + db_suffix)
+
+        db_user = cls._get_cinch_meta('DATABASE_USER', cls.PROJECT_NAME)
+        db_type = cls._get_cinch_meta('DATABASE_TYPE', 'sqlite')
+        db_suffix = cls._get_cinch_meta('DATABASE_SUFFIX',
+            '_default' if db_type != 'sqlite' else '_default.db')
+        db_name = cls._get_cinch_meta('DATABASE_NAME', cls.PROJECT_NAME + db_suffix)
+
         cls.DATABASES = {}
         if db_type is 'postgresql':
             cls.DATABASES['default'] = {
@@ -63,10 +83,11 @@ class BaseConfiguration(Configuration):
                 'NAME': db_name,
                 'USER': db_user,
             }   
+
         elif db_type is 'sqlite':
             cls.DATABASES['default'] = {
                 'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': path.join(DB_DIR, db_name),
+                'NAME': path.join(cls.DB_DIR, db_name),
             }
         else:
             raise ImproperlyConfigured("Unknown DATABASE_TYPE: {}".format(db_type))
@@ -75,38 +96,39 @@ class BaseConfiguration(Configuration):
 class FHSDirsMixin(object):
     @classmethod
     def setup(cls):
-        cls.LIB_DIR = join(cls.BASE_DIR, 'lib')
-        cls.VAR_DIR = join(cls.BASE_DIR, 'var')
-        cls.ETC_DIR = join(cls.BASE_DIR, 'etc')
-        cls.SRC_DIR = join(cls.BASE_DIR, 'src')
-        cls.DB_DIR = join(cls.VAR_DIR, 'db')
-        cls.LOG_DIR = join(cls.VAR_DIR, 'log')
+        cls.LIB_DIR = path.join(cls.BASE_DIR, 'lib')
+        cls.VAR_DIR = path.join(cls.BASE_DIR, 'var')
+        cls.ETC_DIR = path.join(cls.BASE_DIR, 'etc')
+        cls.SRC_DIR = path.join(cls.BASE_DIR, 'src')
+        cls.DB_DIR = path.join(cls.VAR_DIR, 'db')
+        cls.LOG_DIR = path.join(cls.VAR_DIR, 'log')
 
-        if not hasattr(cls, 'MEDIA_ROOT'):
+        if not hasattr(cls, 'MEDIA_ROOT') or not len(cls.MEDIA_ROOT):
             cls.MEDIA_ROOT = path.join(cls.VAR_DIR, 'media')
-        if not hasattr(cls, 'STATIC_ROOT'):
-            cls.MEDIA_ROOT = path.join(cls.VAR_DIR, 'static')
+        if not hasattr(cls, 'STATIC_ROOT') or not len(cls.STATIC_ROOT):
+            cls.STATIC_ROOT = path.join(cls.VAR_DIR, 'static')
+        if not hasattr(cls, 'TEMPLATE_DIRS') or not len(cls.TEMPLATE_DIRS):
+            cls.TEMPLATE_DIRS = [path.join(cls.SRC_DIR, 'templates')]
 
         super(FHSDirsMixin, cls).setup()
 
 
-class EnvSettingsMixin(object):
-
-    
-
-    @classmethod
-    def setup(cls):
-        """
-        Set environment variables listed in ``ENV_SETTINGS`` on this
-        configuration class.
-        """
-        try:
-            env_vars = cls.ENV_SETTINGS
-        except AttributeError:
-            raise ImproperlyConfigured("EnvSettingsMixin requires an ENV_SETTINGS iterable.")
-        for var in env_vars:
-            setattr(cls, var, environ[var])
-        super(EnvSettingsMixin, cls).setup()
+# TODO: Delete? django-configurations has Values now.
+#class EnvSettingsMixin(object):
+#
+#    @classmethod
+#    def setup(cls):
+#        """
+#        Set environment variables listed in ``ENV_SETTINGS`` on this
+#        configuration class.
+#        """
+#        try:
+#            env_vars = cls._get_cinch_meta('ENV_SETTINGS')
+#        except AttributeError:
+#            raise ImproperlyConfigured("EnvSettingsMixin requires a CinchMeta.ENV_SETTINGS iterable.")
+#        for var in env_vars:
+#            setattr(cls, var, environ[var])
+#        super(EnvSettingsMixin, cls).setup()
 
 
 class HostsURLsMixin(object):
@@ -123,18 +145,26 @@ class HostsURLsMixin(object):
     """
     @classmethod
     def setup(cls):
-        # Host routing. https://django-hosts.readthedocs.org/en/latest/
-        ROOT_HOSTCONF = cls.PROJECT_NAME + '.hosts'
-        DEFAULT_HOST = 'main'
-        ROOT_URLCONF = cls.PROJECT_NAME + '.urls._default'
+        # Host routing, with django-hosts
+        # https://django-hosts.readthedocs.org/en/latest/
+        cls.ROOT_HOSTCONF = cls.PROJECT_NAME + '.hosts'
+        cls.DEFAULT_HOST = 'main'
+
+        # Fallback/default url conf
+        cls.ROOT_URLCONF = cls.PROJECT_NAME + '.urls._default'
+
         # Let project.urls._global include project.urls._debug if it exists
         if not hasattr(cls, 'DEBUG_URLPATTERNS_ENABLED'):
             cls.DEBUG_URLPATTERNS_ENABLED = cls.DEBUG
 
+        # Allow 'example.com.local' hosts, if debugging is turned on
+        # TODO: Argh this makes no sense as host validation only works when debug's off.
+        # Okay wait we want this here to work with django-hosts(??)
         if cls.DEBUG:
             debug_hosts = []
             for host in cls.ALLOWED_HOSTS:
+                # TODO: Import something to distinguish ips from named domains.
                 if any(part for part in host.split('.') if not part.isdigit()):
                     debug_hosts.append(host + '.local')
 
-        super(HostsMixin, cls).setup()
+        super(HostsURLsMixin, cls).setup()

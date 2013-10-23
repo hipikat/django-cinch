@@ -65,6 +65,7 @@ class CinchSettings(object):
         """Do nothing; CinchSettings should always be the final base class."""
 
 
+# TODO: Sub-class from FileLoggingMixin in .logging? (at least?)
 class NormaliseSettings(object):
     """
     Mixin to set sensible defaults on a CinchSettings class. TODOLipsum
@@ -83,7 +84,7 @@ class NormaliseSettings(object):
         cnf.setdefault('TIME_ZONE', 'UTC')      # Default is "America/Chicago"
         cnf.setdefault('LANGUAGE_CODE', 'en')   # Default is 'en-us'
         cnf.setdefault('SITE_ID', 1)            # Default is not defined
-        cnf.setdefault('WSGI_APPLICATION', cnf.PROJECT_MODULE + '.urls')
+        cnf.setdefault('WSGI_APPLICATION', cnf.PROJECT_MODULE + '.wsgi.application')
 
         # Debugging, testing, development
         cnf.setdefault('DEBUG', False)
@@ -98,38 +99,6 @@ class NormaliseSettings(object):
         cnf.setdefault('MEDIA_URL', '/media/')
         if hasattr(cnf, 'PROJECT_MODULE'):
             cnf.setdefault('ROOT_URLCONF', cnf.PROJECT_MODULE + '.urls')
-
-        # Logging
-        cnf.setdefault('LOGGING', {
-            'formatters': {
-                'verbose': {
-                    'format': "\n%(levelname)s [%(asctime)s][%(pathname)s:%(lineno)s]" +
-                              "[p/t:%(process)d/%(thread)d]\n%(message)s"
-                },
-                'simple': {
-                    'format': '%(levelname)s [%(module)s:%(lineno)s] %(message)s'
-                },
-            },
-            'filters': {
-                'require_debug_false': {
-                    '()': 'django.utils.log.RequireDebugFalse',
-                },
-            },
-            'handlers': {
-                'mail_admins': {
-                    'level': 'ERROR',
-                    'filters': ['require_debug_false'],
-                    'class': 'django.utils.log.AdminEmailHandler',
-                },
-            },
-            'loggers': {
-                'django.request': {
-                    'handlers': ['mail_admins'],
-                    'level': 'ERROR',
-                    'propagate': True,
-                },
-            },
-        })
 
         super(NormaliseSettings, cnf).setup(*args, **kwargs)
 

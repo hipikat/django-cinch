@@ -1,4 +1,5 @@
 
+from itertools import chain
 from os import environ
 import sys
 from django.core.exceptions import ImproperlyConfigured
@@ -92,7 +93,10 @@ class NormaliseSettings(object):
         cnf.setdefault('TESTING', True if 'test' in sys.argv else False)
 
         # Security
-        cnf.setdefault('INTERNAL_IPS', tuple('127.0.0.1'))
+        cnf.setdefault('INTERNAL_IPS', ('127.0.0.1',))
+        if cnf.DEBUG and hasattr(cnf, 'ALLOWED_HOSTS'):
+            local_hosts = [host + '.local' for host in cnf.ALLOWED_HOSTS if host[0] == '.']
+            cnf.ALLOWED_HOSTS = list(chain(cnf.ALLOWED_HOSTS, local_hosts))
 
         # URLs
         cnf.setdefault('STATIC_URL', '/static/')

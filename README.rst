@@ -4,6 +4,8 @@ django-cinch
 
 **Class-based settings for Django projects**
 
+This project is still under heavy development.
+
 .. **Code Is Not Configuration. However...**
 .. 
 .. Django settings modules can rapidly get out of hand when many developers

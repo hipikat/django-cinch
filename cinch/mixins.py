@@ -89,6 +89,7 @@ class FHSDirsMixin(SetDefaultMixin):
         set_default('TEMPLATE_DIRS', [path.join(self.SRC_DIR, 'templates')])  # src/templates/
         set_default('USR_DIR', path.join(self.BASE_DIR, 'src'))               # src/
         set_default('VAR_DIR', path.join(self.BASE_DIR, 'var'))               # var/
+        #set_default('ENV_DIR', path.join(self.VAR_DIR, 'var', 'env'))        # var/env
         set_default('DB_DIR', path.join(self.VAR_DIR, 'db'))                  # var/db/
         set_default('FIXTURES_DIRS', [path.join(self.VAR_DIR, 'fixtures')])   # var/fixtures/
         set_default('LOG_DIR', path.join(self.VAR_DIR, 'log'))                # var/log/

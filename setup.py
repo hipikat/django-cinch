@@ -1,10 +1,14 @@
+"""
+django-cinch TODO lipsum
+"""
+
 from setuptools import setup, find_packages
-from cinch import __version__
+import cinch
 
 
 setup(
     name='django-cinch',
-    version=__version__,
+    version=cinch.__version__,
     description='Modular, class-based settings for Django',
     long_description=(open('README.rst').read() + '\n\n' +
                       open('COLOPHON.rst').read()),

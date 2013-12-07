@@ -2,11 +2,10 @@
 from itertools import chain
 from os import environ
 import sys
-from django.core.exceptions import ImproperlyConfigured
 from .mixins import SetDefaultMixin
 
 
-VERSION = '0.0.1'
+__version__ = '0.0.1'
 
 
 def cinch_settings(settings_globals, settings_class):
@@ -51,6 +50,7 @@ class NormaliseSettings(object):
         try:
             cnf.setdefault('MANAGERS', cnf.ADMINS)
         except AttributeError:
+            from django.core.exceptions import ImproperlyConfigured
             raise ImproperlyConfigured(cnf.__missing_setting_msg.format('ADMINS'))
         cnf.setdefault('TIME_ZONE', 'UTC')      # Default is "America/Chicago"
         cnf.setdefault('LANGUAGE_CODE', 'en')   # Default is 'en-us'

@@ -2,7 +2,7 @@ History
 =======
 
 django-cinch is a palimpsest of broken attempts to fix the author's gripes
-with module-based settings, which can be seen in the commit history. Its
+with Django's flat settings, which can be seen in the commit history. Its
 current form is most heavily inspired by `django-configurations`.
 
 .. _django-configurations: http://django-configurations.readthedocs.org/en/latest/

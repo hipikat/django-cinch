@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
-from cinch import VERSION
+from cinch import __version__
 
 
 setup(
     name='django-cinch',
-    version=VERSION,
+    version=__version__,
     description='Modular, class-based settings for Django',
     long_description=(open('README.rst').read() + '\n\n' +
                       open('COLOPHON.rst').read()),

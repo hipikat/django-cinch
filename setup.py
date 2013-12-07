@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from cinch import VERSION
 
 
@@ -12,7 +12,7 @@ setup(
     license='BSD 2-Clause',
     author='Adam Wright',
     author_email='adam@hipikat.org',
-    py_modules=['cinch'],
+    packages=find_packages(),
     include_package_data=True,
     classifiers=[
         'Development Status :: 3 - Alpha',

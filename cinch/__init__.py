@@ -6,6 +6,9 @@ from django.core.exceptions import ImproperlyConfigured
 from .mixins import SetDefaultMixin
 
 
+VERSION = '0.0.1'
+
+
 def cinch_settings(settings_globals, settings_class):
     settings_obj = settings_globals[settings_class]()
     settings = {att: getattr(settings_obj, att)

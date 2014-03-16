@@ -53,13 +53,13 @@ class FHSDirsMixin(SetDefaultMixin):
 
     def __setattr__(self, name, value):
         """
-        Call ``self.setup()`` when BASE_DIR is set on the class. Also track
+        Call ``self.setup()`` when PROJECT_PATH is set on the class. Also track
         attributes which have been set since ``self.setup()`` was last called.
         """
         super(FHSDirsMixin, self).__setattr__('_fhsdirs_altered',
                                               self._fhsdirs_altered | set(['name']))
         super(FHSDirsMixin, self).__setattr__(name, value)
-        if name == 'BASE_DIR':
+        if name == 'PROJECT_PATH':
             self.setup()
 
     def setup(self, *args, **kwargs):
@@ -69,9 +69,9 @@ class FHSDirsMixin(SetDefaultMixin):
         keyword argument value ``force`` is ``True``.
         """
         # If called from a class (such as `CinchSettings`) being
-        # instantitated, it's easier to set BASE_DIR on the sub-class.
-        if 'base_dir' in kwargs:
-            self.BASE_DIR = kwargs['base_dir']
+        # instantitated, it's easier to set PROJECT_PATH on the sub-class.
+        if 'project_path' in kwargs:
+            self.PROJECT_PATH = kwargs['project_path']
         
         kwargs['force'] = kwargs.get('force', False)
 
@@ -82,13 +82,13 @@ class FHSDirsMixin(SetDefaultMixin):
             if name not in self._fhsdirs_altered or kwargs['force']:
                 self.setdefault(name, val)
 
-        set_default('ETC_DIR', path.join(self.BASE_DIR, 'etc'))               # etc/
+        set_default('ETC_DIR', path.join(self.PROJECT_PATH, 'etc'))               # etc/
         set_default('ETC_LOCAL_DIR', path.join(self.ETC_DIR, 'local'))         # etc/local/
-        set_default('LIB_DIR', path.join(self.BASE_DIR, 'lib'))               # lib/
-        set_default('SRC_DIR', path.join(self.BASE_DIR, 'src'))               # src/
+        set_default('LIB_DIR', path.join(self.PROJECT_PATH, 'lib'))               # lib/
+        set_default('SRC_DIR', path.join(self.PROJECT_PATH, 'src'))               # src/
         set_default('TEMPLATE_DIRS', [path.join(self.SRC_DIR, 'templates')])  # src/templates/
-        set_default('USR_DIR', path.join(self.BASE_DIR, 'src'))               # src/
-        set_default('VAR_DIR', path.join(self.BASE_DIR, 'var'))               # var/
+        set_default('USR_DIR', path.join(self.PROJECT_PATH, 'src'))               # src/
+        set_default('VAR_DIR', path.join(self.PROJECT_PATH, 'var'))               # var/
         #set_default('ENV_DIR', path.join(self.VAR_DIR, 'var', 'env'))        # var/env
         set_default('DB_DIR', path.join(self.VAR_DIR, 'db'))                  # var/db/
         set_default('FIXTURES_DIRS', [path.join(self.VAR_DIR, 'fixtures')])   # var/fixtures/
@@ -102,10 +102,10 @@ class FHSDirsMixin(SetDefaultMixin):
             sup.setup(*args, **kwargs)
 
 
-#def fhs_dirs(base_dir):
+#def fhs_dirs(project_path):
 #    class FHSDirs(FHSDirsMixin):
-#        BASE_DIR = base_dir
-#    return FHSDirs(base_dir)
+#        PROJECT_PATH = project_path
+#    return FHSDirs(project_path)
 
 
 #class DjangoHostsURLsMixin(object):
